@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>College Rater!</title>
+  <style>
+    :root {
+      --accent:#2563eb;
+      --muted:#6b7280;
+      --card:#ffffff;
+      --bg:#f3f4f6;
+      --glass:rgba(255,255,255,0.6);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+    body{background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 100%);padding:24px;color:#111827;}
+    .container{max-width:1100px;margin:0 auto;}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    header h1{margin:0;font-size:20px}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(16,24,40,0.06);margin-bottom:16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    label{font-size:13px;color:var(--muted)}
+    input[type="number"],input[type="text"]{padding:8px;border:1px solid #e5e7eb;border-radius:8px}
+    input[type="number"]{width:90px}
+    .weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .weight-item{background:var(--glass);padding:12px;border-radius:10px}
+    .small{font-size:12px;color:var(--muted);margin-top:6px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    button{background:var(--accent);color:white;padding:8px 12px;border-radius:10px;border:0;cursor:pointer;transition:0.2s}
+    button:hover{opacity:0.9}
+    button.secondary{background:white;color:var(--accent);border:1px solid #c7d2fe}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #f3f4f6;font-size:14px}
+    th{background:transparent;color:#374151}
+    .rating-input{width:85px;padding:6px;border-radius:6px;border:1px solid #e5e7eb}
+    .error{color:#dc2626;font-weight:600}
+    .muted{color:var(--muted);font-size:13px}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    @media (max-width:720px){.row{flex-direction:column}.controls{justify-content:flex-start}.weights{grid-template-columns:1fr} table{font-size:12px}}
+    .download-link{display:inline-block;padding:6px 10px;border-radius:8px;background:#10b981;color:white;text-decoration:none}
+    #colleges-area{overflow-x:auto}
+  </style>
+  <!-- jsPDF + AutoTable for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>College Rater!</h1>
+        <div class="muted"><h3>Set how important each factor is (if a factor is not important, you can put a 0%). You should rank each factor for each college based on your own knowledge of the college(so everything is very personalized!) </h3></div>
+      </div>
+    </header>
+
+
+    <section class="card">
+      <div class="topline">
+        <strong>Step 1 — Set factor weightings (%)</strong>
+        <div class="muted">Weights should total <strong>100%</strong>. Click Normalize if not.</div>
+      </div>
+
+
+      <div class="weights" style="margin-top:12px;">
+        <div class="weight-item">
+          <label>Location (%)</label>
+          <div class="small">rural/urban/city, distance from home, safety</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-location" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Student size (%)</label>
+          <div class="small">how many people attend</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-size" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Student Culture (%)</label>
+          <div class="small">general character of students (competitive, passionate, hardworking, friendly)</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-culture" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Beauty of Campus (%)</label>
+          <div class="small">overall vibe/look of the college, includes architecture</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-beauty" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Housing/Dining (%)</label>
+          <div class="small">how dorms are and food options/quality</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-housing" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Cost/Financial Aid (%)</label>
+          <div class="small">Tuition cost and scholarship opportunities</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-cost" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Career Outcomes (%)</label>
+          <div class="small">money after college, career placement, graduation rates</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-career" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Academic Opportunities (%)</label>
+          <div class="small">research, internships, study abroad, majors</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-acad" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Greek life (%)</label>
+          <div class="small">fraternities/sororities, effect on social scene</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-greek" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Diversity (%)</label>
+          <div class="small">racial/gender diversity</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-diversity" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+
+
+        <div class="weight-item">
+          <label>Sports (%)</label>
+          <div class="small">collegiate level, effect on social scene</div>
+          <div class="row" style="margin-top:8px">
+            <input class="weight" id="w-sports" type="number" min="0" max="100" value="10">
+            <input class="weight-range" type="range" min="0" max="100" value="10">
+          </div>
+        </div>
+      </div>
+
+
+      <div class="row controls">
+        <button id="normalize">Normalize to 100%</button>
+        <button class="secondary" id="zeroWeights">Reset weights</button>
+        <div id="weight-sum" style="align-self:center;margin-left:8px">Sum: <strong>100</strong>%</div>
+        <div id="weight-error" class="error" style="display:none;margin-left:12px">Weights must add to 100% — or click Normalize.</div>
+      </div>
+    </section>
+
+
+    <section class="card">
+      <div class="topline">
+        <strong>Step 2 — Add colleges & rate factors</strong>
+      </div>
+
+
+      <div style="margin-top:12px" class="row">
+        <input id="college-name" type="text" placeholder="New college name" style="flex:1;min-width:180px">
+        <button id="add-college">Add college</button>
+        <button class="secondary" id="add-sample">Add sample colleges</button>
+      </div>
+
+
+      <div id="colleges-area" style="margin-top:14px">
+        <table id="colleges-table" class="card">
+          <thead>
+            <tr>
+              <th>College</th>
+              <th>Location</th>
+              <th>Student size</th>
+              <th>Student Culture</th>
+              <th>Beauty of Campus</th>
+              <th>Housing/Dining</th>
+              <th>Cost/Financial Aid</th>
+              <th>Career Outcomes</th>
+              <th>Academic Opportunities</th>
+              <th>Greek life</th>
+              <th>Diversity</th>
+              <th>Sports</th>
+              <th>Score (out of 10)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="colleges-body"></tbody>
+        </table>
+      </div>
+
+
+      <div class="row controls">
+        <button id="sort-desc">Sort by score ▼</button>
+        <button class="secondary" id="reset-all">Reset all</button>
+
+
+        <!-- CSV / PDF buttons -->
+        <button id="import-csv" class="secondary">Import CSV</button>
+        <a id="download-csv" class="download-link" href="#">Export CSV</a>
+        <button id="export-pdf" class="secondary">Export PDF</button>
+      </div>
+    </section>
+  </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const factors = [
+        { key:'location', label:'Location' },
+        { key:'size', label:'Student size' },
+        { key:'culture', label:'Student Culture' },
+        { key:'beauty', label:'Beauty of Campus' },
+        { key:'housing', label:'Housing/Dining' },
+        { key:'cost', label:'Cost/Financial Aid' },
+        { key:'career', label:'Career Outcomes' },
+        { key:'acad', label:'Academic Opportunities' },
+        { key:'greek', label:'Greek life' },
+        { key:'diversity', label:'Diversity' },
+        { key:'sports', label:'Sports' }
+      ];
+
+
+      let colleges = JSON.parse(localStorage.getItem("colleges")) || [];
+
+
+      const weightInputs = document.querySelectorAll('.weight');
+      const rangeInputs = document.querySelectorAll('.weight-range');
+      const sumEl = document.getElementById('weight-sum');
+      const errorEl = document.getElementById('weight-error');
+
+
+      function saveState() {
+        localStorage.setItem("colleges", JSON.stringify(colleges));
+      }
+
+
+      function updateSum() {
+        const {sum} = readWeights();
+        sumEl.innerHTML = `Sum: <strong>${sum}</strong>%`;
+        errorEl.style.display = sum === 100 ? "none" : "inline";
+      }
+
+
+      function syncInputs() {
+        weightInputs.forEach((num, i) => {
+          const range = rangeInputs[i];
+          num.addEventListener('input', () => { range.value=num.value; updateSum(); recomputeAllScores(); saveState(); });
+          range.addEventListener('input', () => { num.value=range.value; updateSum(); recomputeAllScores(); saveState(); });
+        });
+      }
+
+
+      function readWeights() {
+        const weights = {}; let sum=0;
+        document.querySelectorAll('.weight').forEach(inp => {
+          const id=inp.id.replace('w-','');
+          const val=parseFloat(inp.value)||0;
+          weights[id]=val;
+          sum+=val;
+        });
+        return {weights,sum};
+      }
+
+
+      function recomputeScore(col) {
+        const {weights,sum} = readWeights();
+        let scale = sum===0 ? 0 : 100/sum;
+        let total=0;
+        factors.forEach(f => {
+          const w=(weights[f.key]||0)*scale;
+          const rating=parseFloat(col.ratings[f.key])||0;
+          total+=(w/100)*rating;
+        });
+        col.score=Math.round(total*100)/100;
+      }
+
+
+      function recomputeAllScores() {
+        colleges.forEach(c=>recomputeScore(c));
+        const rows=document.querySelectorAll('#colleges-body tr');
+        rows.forEach((tr,i)=>{
+          const col=colleges[i];
+          const td=tr.children[12]; // score column index (0-based)
+          if(td) td.textContent=col.score.toFixed(2);
+        });
+        saveState();
+      }
+
+
+      function renderCollegeRows() {
+        const tbody=document.getElementById('colleges-body');
+        tbody.innerHTML='';
+        colleges.forEach(col=>{
+          const tr=document.createElement('tr');
+          const nameTd=document.createElement('td');
+          const nameInput=document.createElement('input');
+          nameInput.type='text';
+          nameInput.value=col.name;
+          nameInput.style.width='100%';
+          nameInput.addEventListener('input',()=>{col.name=nameInput.value; saveState();});
+          nameTd.appendChild(nameInput);
+          tr.appendChild(nameTd);
+
+
+          factors.forEach(f=>{
+            const td=document.createElement('td');
+            const inp=document.createElement('input');
+            inp.type='number';
+            inp.step='0.1';
+            inp.min='0'; inp.max='10';
+            inp.value=(col.ratings[f.key]||0).toFixed(1);
+            inp.className='rating-input';
+            inp.addEventListener('blur',()=>{
+              let v=parseFloat(inp.value)||0;
+              v=Math.min(10,Math.max(0,v));
+              inp.value=v.toFixed(1);
+              col.ratings[f.key]=v;
+              recomputeScore(col);
+              recomputeAllScores();
+            });
+            td.appendChild(inp);
+            tr.appendChild(td);
+          });
+
+
+          const scoreTd=document.createElement('td');
+          scoreTd.style.fontWeight='700';
+          scoreTd.style.textAlign='center';
+          scoreTd.textContent=col.score.toFixed(2);
+          tr.appendChild(scoreTd);
+
+
+          const actTd=document.createElement('td');
+          const del=document.createElement('button');
+          del.textContent='Delete';
+          del.className='secondary';
+          del.addEventListener('click',()=>{colleges=colleges.filter(c=>c!==col);renderCollegeRows();});
+          actTd.appendChild(del);
+          tr.appendChild(actTd);
+
+
+          tbody.appendChild(tr);
+        });
+      }
+
+
+      function addCollege(name='Untitled College', pre){
+        const ratings={};
+        factors.forEach(f=>ratings[f.key]=(pre&&pre[f.key])||5.0);
+        const c={name,ratings,score:0};
+        colleges.push(c);
+        recomputeScore(c);
+        renderCollegeRows();
+        recomputeAllScores();
+      }
+
+
+      document.getElementById('add-college').onclick=()=>{
+        const name=document.getElementById('college-name').value.trim()||'Untitled College';
+        addCollege(name);
+        document.getElementById('college-name').value='';
+      };
+
+
+      document.getElementById('add-sample').onclick=()=>{
+        addCollege('State University',{
+          location:7.0,size:6.5,culture:6.8,beauty:6.8,housing:7.0,cost:5.5,career:7.5,acad:7.8,greek:6.0,diversity:6.9,sports:8.5
+        });
+        addCollege('Tech Institute',{
+          location:6.0,size:8.5,culture:7.0,beauty:5.0,housing:6.0,cost:5.0,career:9.2,acad:9.1,greek:3.5,diversity:5.8,sports:4.0
+        });
+        addCollege('Liberal Arts College',{
+          location:8.2,size:2.5,culture:8.0,beauty:8.7,housing:8.5,cost:6.0,career:7.0,acad:8.0,greek:4.5,diversity:7.9,sports:5.5
+        });
+      };
+
+
+      document.getElementById('sort-desc').onclick=()=>{
+        colleges.sort((a,b)=>b.score-a.score);
+        renderCollegeRows();
+      };
+
+
+      document.getElementById('reset-all').onclick=()=>{
+        if(!confirm('Clear all colleges and reset weights?')) return;
+        colleges=[]; renderCollegeRows();
+        const defaults=[10,10,10,10,10,10,10,10,10,10,10]; // eleven factors each 10%
+        weightInputs.forEach((w,i)=>{ w.value=defaults[i]; rangeInputs[i].value=defaults[i]; });
+        updateSum(); recomputeAllScores();
+      };
+
+
+      document.getElementById('normalize').onclick=()=>{
+        const vals=Array.from(weightInputs,w=>Math.max(0,Math.min(100,parseFloat(w.value)||0)));
+        const sum=vals.reduce((a,b)=>a+b,0);
+        if(sum===0){
+          const equal=10;
+          weightInputs.forEach((w,i)=>{ w.value=equal; rangeInputs[i].value=equal; });
+          updateSum(); recomputeAllScores(); return;
+        }
+        const factor=100/sum;
+        const scaled=vals.map(v=>v*factor);
+        const floors=scaled.map(v=>Math.floor(v));
+        let currentSum=floors.reduce((a,b)=>a+b,0);
+        const remainders=scaled.map((v,i)=>({idx:i,rem:v-floors[i]}));
+        let toDistribute=100-currentSum;
+        remainders.sort((a,b)=>b.rem-a.rem);
+        for(let i=0;i<toDistribute;i++){ floors[remainders[i].idx]+=1; }
+        floors.forEach((val,i)=>{ weightInputs[i].value=val; rangeInputs[i].value=val; });
+        updateSum(); recomputeAllScores();
+      };
+
+
+      document.getElementById('zeroWeights').onclick=()=>{
+        weightInputs.forEach((inp,i)=>{ inp.value=0; rangeInputs[i].value=0; });
+        updateSum(); recomputeAllScores();
+      };
+
+
+      // CSV, import/export, PDF etc. (all adjusted for Student Culture)
+      document.getElementById("download-csv").onclick=()=>{
+        if(colleges.length===0) return;
+        const headers = ['College','Location','Student size','Student Culture','Beauty of Campus','Housing/Dining','Cost/Financial Aid','Career Outcomes','Academic Opportunities','Greek life','Diversity','Sports','Score'];
+        let csv = headers.join(",") + "\n";
+        colleges.forEach(c=>{
+          const row = [
+            c.name,
+            c.ratings.location,
+            c.ratings.size,
+            c.ratings.culture,
+            c.ratings.beauty,
+            c.ratings.housing,
+            c.ratings.cost,
+            c.ratings.career,
+            c.ratings.acad,
+            c.ratings.greek,
+            c.ratings.diversity,
+            c.ratings.sports,
+            c.score
+          ];
+          csv += row.join(",") + "\n";
+        });
+        const blob=new Blob([csv],{type:"text/csv"});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a"); a.href=url; a.download="college_ratings.csv"; a.click();
+        URL.revokeObjectURL(url);
+      };
+
+
+      document.getElementById("import-csv").onclick=()=>{
+        const input=document.createElement("input");
+        input.type="file"; input.accept=".csv";
+        input.onchange=e=>{
+          const file=e.target.files[0]; if(!file) return;
+          const reader=new FileReader();
+          reader.onload=evt=>{
+            const lines=evt.target.result.split("\n").map(x=>x.trim()).filter(x=>x);
+            if(lines.length===0) return;
+            const header=lines[0].split(",").map(h=>h.toLowerCase());
+            const expected=["college","location","student size","student culture","beauty of campus","housing/dining","cost/financial aid","career outcomes","academic opportunities","greek life","diversity","sports","score"];
+            for(let i=0;i<expected.length;i++){
+              if(!header[i]||!header[i].startsWith(expected[i])) { alert("CSV format incorrect. Use exported format."); return; }
+            }
+            for(let i=1;i<lines.length;i++){
+              const cols=lines[i].split(",");
+              if(cols.length<12) continue;
+              const name=cols[0];
+              const ratings={
+                location:parseFloat(cols[1])||0,
+                size:parseFloat(cols[2])||0,
+                culture:parseFloat(cols[3])||0,
+                beauty:parseFloat(cols[4])||0,
+                housing:parseFloat(cols[5])||0,
+                cost:parseFloat(cols[6])||0,
+                career:parseFloat(cols[7])||0,
+                acad:parseFloat(cols[8])||0,
+                greek:parseFloat(cols[9])||0,
+                diversity:parseFloat(cols[10])||0,
+                sports:parseFloat(cols[11])||0
+              };
+              addCollege(name,ratings);
+            }
+            recomputeAllScores();
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      };
+
+
+      document.getElementById("export-pdf").onclick=()=>{
+        if(colleges.length===0){ alert("No colleges to export."); return; }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation:"landscape" });
+        const headers=["College","Location","Student size","Student Culture","Beauty of Campus","Housing/Dining","Cost/Financial Aid","Career Outcomes","Academic Opportunities","Greek life","Diversity","Sports","Score"];
+        const rows=colleges.map(c=>[
+          c.name,
+          c.ratings.location.toFixed(1),
+          c.ratings.size.toFixed(1),
+          c.ratings.culture.toFixed(1),
+          c.ratings.beauty.toFixed(1),
+          c.ratings.housing.toFixed(1),
+          c.ratings.cost.toFixed(1),
+          c.ratings.career.toFixed(1),
+          c.ratings.acad.toFixed(1),
+          c.ratings.greek.toFixed(1),
+          c.ratings.diversity.toFixed(1),
+          c.ratings.sports.toFixed(1),
+          c.score.toFixed(2)
+        ]);
+        doc.setFontSize(14); doc.text("College Ratings",14,15);
+        doc.autoTable({ startY:22, head:[headers], body:rows, styles:{fontSize:9}, headStyles:{fillColor:[37,99,235]} });
+        doc.save("college_ratings.pdf");
+      };
+
+
+      syncInputs(); updateSum();
+      if(colleges.length===0) addCollege('Example College',{
+        location:8.0,size:4.5,culture:5.0,beauty:7.5,housing:7.0,cost:6.5,career:7.8,acad:8.4,greek:5.0,diversity:7.0,sports:6.0
+      });
+      renderCollegeRows();
+      recomputeAllScores();
+    });
+  </script>
+</body>
+</html>
+
+
+
